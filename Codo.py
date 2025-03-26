@@ -117,7 +117,6 @@ if not st.session_state["username"]:
     st.session_state["username"] = st.text_input("Введіть ваше ім'я:")
     if st.session_state["username"]:
         load_questions()
-        st.experimental_rerun()
 
 # Бічна панель з інформацією про гравця
 if st.session_state["username"]:
