@@ -56,6 +56,14 @@ def generate_questions():
     }
 
 # Початкова ініціалізація змінних сесії
+if "reset_game" not in st.session_state:
+    st.session_state["reset_game"] = False
+if st.session_state["reset_game"]:
+    for key in st.session_state.keys():
+        del st.session_state[key]
+    st.session_state["reset_game"] = False
+    st.experimental_rerun()
+
 if "username" not in st.session_state:
     st.session_state["username"] = None
 if "planet" not in st.session_state:
@@ -175,5 +183,5 @@ if st.session_state["username"]:
     else:
         st.warning(f"😢 У {st.session_state['username']} закінчилися життя. Гру завершено.")
         if st.button("🔄 Спробувати знову"):
-            for key in st.session_state.keys():
-                del st.session_state[key]
+            st.session_state["reset_game"] = True
+            st.experimental_rerun()
