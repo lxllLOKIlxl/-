@@ -24,11 +24,11 @@ col1, col2 = st.columns([3, 1])
 # Введення ніку гравця (правий блок)
 with col2:
     if st.session_state["username"] is None:
-        st.session_state["username"] = st.text_input("👤 Введіть ваш нік:", value="Гравець")
+        st.session_state["username"] = st.text_input("👤 Введіть ваш нік:", value="")
         st.stop()
 
     st.markdown("### 👤 Інформація про гравця:")
-    st.markdown(f"**Ім'я:** {st.session_state['username']}")
+    st.markdown(f"**Ім'я:** {st.session_state['username'] if st.session_state['username'] else 'Гравець'}")
     st.markdown(f"**❤️ Життя:** {st.session_state['lives']} / 10")
     st.markdown(f"**💯 Рахунок:** {st.session_state['score']}")
     st.markdown(f"**🌍 Планета:** {st.session_state['planet']}")
@@ -93,6 +93,7 @@ with col1:
             else:
                 st.session_state["lives"] -= 1
                 st.error("❌ Неправильно! Ви втратили 1 життя.")
+                st.session_state["task"] = None  # Змінити питання після помилки
         else:
             st.warning("У вас закінчилися життя. Дочекайтесь відновлення або перезапустіть гру!")
 
