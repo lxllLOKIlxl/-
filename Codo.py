@@ -177,4 +177,3 @@ if st.session_state["username"]:
         if st.button("🔄 Спробувати знову"):
             for key in st.session_state.keys():
                 del st.session_state[key]
-            st.experimental_rerun()
