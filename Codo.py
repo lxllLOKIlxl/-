@@ -2,25 +2,49 @@ import streamlit as st
 import random
 from datetime import datetime, timedelta
 
-# Ініціалізація сесійних змінних
-if "username" not in st.session_state:
-    st.session_state["username"] = ""
+# Назва гри
+st.title("🚀 Кодонавт: Космічна пригода")
+
+# Лівий стовпець для гри, правий для інформації про гравця
+col1, col2 = st.columns([3, 1])
+
+# Початкові змінні
 if "planet" not in st.session_state:
     st.session_state["planet"] = 1
 if "score" not in st.session_state:
     st.session_state["score"] = 0
 if "lives" not in st.session_state:
     st.session_state["lives"] = 10
-if "questions" not in st.session_state:
-    st.session_state["questions"] = []
-if "current_question" not in st.session_state:
-    st.session_state["current_question"] = None
 if "last_life_restore" not in st.session_state:
     st.session_state["last_life_restore"] = datetime.now()
+if "username" not in st.session_state:
+    st.session_state["username"] = ""
 
-# Функція для створення запитань
-def generate_questions():
-    return [
+# Введення ніку гравця (правий блок)
+with col2:
+    if st.session_state["username"] == "":
+        st.session_state["username"] = st.text_input("👤 Введіть ваш нік:", value="Гравець")
+
+# Оновлення життів кожні 10 хвилин
+if st.session_state["lives"] < 10:
+    time_diff = datetime.now() - st.session_state["last_life_restore"]
+    if time_diff >= timedelta(minutes=10):
+        restore_lives = time_diff.seconds // 600
+        st.session_state["lives"] += restore_lives
+        st.session_state["lives"] = min(st.session_state["lives"], 10)
+        st.session_state["last_life_restore"] = datetime.now()
+
+# Інформація про гравця (правий блок)
+with col2:
+    st.markdown("### 👤 Інформація про гравця:")
+    st.markdown(f"**Ім'я:** {st.session_state['username']}")
+    st.markdown(f"**❤️ Життя:** {st.session_state['lives']} / 10")
+    st.markdown(f"**💯 Рахунок:** {st.session_state['score']}")
+    st.markdown(f"**🌍 Планета:** {st.session_state['planet']}")
+
+# Вибір питання для рівня (лівий блок)
+questions = {
+    1: [
         {"question": "Що таке 2 + 2?", "answer": "4"},
         {"question": "Яка планета третя від Сонця?", "answer": "Земля"},
         {"question": "Який результат: 10 // 3?", "answer": "3"},
@@ -31,65 +55,54 @@ def generate_questions():
         {"question": "Який колір має небо?", "answer": "Синій"},
         {"question": "Скільки буде 5 * 5?", "answer": "25"},
         {"question": "Який океан найбільший?", "answer": "Тихий"}
+    ],
+    2: [
+        {"question": "Скільки планет у Сонячній системі?", "answer": "8"},
+        {"question": "Що таке 9 * 9?", "answer": "81"},
+        {"question": "Яка планета найближче до Сонця?", "answer": "Меркурій"},
+        # Додайте ще 17 питань
+    ],
+    3: [
+        {"question": "Що таке 12 * 12?", "answer": "144"},
+        {"question": "Який супутник обертається навколо Землі?", "answer": "Місяць"},
+        # Додайте ще 28 питань
     ]
+}
 
-# Вибір нового запитання
-def get_new_question():
-    if st.session_state["questions"]:
-        return random.choice(st.session_state["questions"])
-    return None
+with col1:
+    st.markdown("### 🌌 Питання:")
+    level_questions = questions[st.session_state["planet"]]
+    task = random.choice(level_questions)
+    st.write(task["question"])
+    user_answer = st.text_input("📝 Введіть вашу відповідь:", "")
 
-# Ініціалізація запитань
-if not st.session_state["questions"]:
-    st.session_state["questions"] = generate_questions()
-
-# Заголовок
-st.title("🚀 Кодонавт: Космічна Пригода")
-
-# Введення імені гравця
-if not st.session_state["username"]:
-    st.session_state["username"] = st.text_input("👤 Введіть ваше ім'я:")
-    if st.button("Підтвердити ім'я"):
-        if st.session_state["username"].strip():
-            st.success(f"Ім'я збережено: {st.session_state['username']}")
-            st.session_state["current_question"] = get_new_question()
-            st.experimental_rerun()
-        else:
-            st.warning("Будь ласка, введіть коректне ім'я.")
-else:
-    # Панель з інформацією про гравця
-    st.sidebar.header("Інформація про гравця")
-    st.sidebar.write(f"**Ім'я:** {st.session_state['username']}")
-    st.sidebar.write(f"**❤️ Життя:** {st.session_state['lives']} / 10")
-    st.sidebar.write(f"**💯 Рахунок:** {st.session_state['score']}")
-    st.sidebar.write(f"**🌍 Планета:** {st.session_state['planet']}")
-
-    # Основна гра
-    if st.session_state["current_question"]:
-        question = st.session_state["current_question"]
-        st.write(f"**Питання:** {question['question']}")
-        user_answer = st.text_input("📝 Введіть вашу відповідь:")
-
-        if st.button("Перевірити"):
-            if user_answer.strip().lower() == question["answer"].lower():
-                st.success("✅ Правильно! Ви отримали 10 очків.")
+# Механіка перевірки відповіді (лівий блок)
+with col1:
+    if st.button("Перевірити"):
+        if st.session_state["lives"] > 0:
+            if user_answer.strip().lower() == task["answer"].lower():
                 st.session_state["score"] += 10
-                st.session_state["questions"].remove(question)
+                st.success("✅ Правильно! Ви отримали 10 очків.")
             else:
-                st.error("❌ Неправильно! Ви втратили 1 життя.")
                 st.session_state["lives"] -= 1
+                st.error("❌ Неправильно! Ви втратили 1 життя.")
+        else:
+            st.warning("У вас закінчилися життя. Дочекайтесь відновлення або перезапустіть гру!")
 
-            if st.session_state["score"] >= 100:
-                st.balloons()
-                st.success("🎉 Ви перейшли на наступний рівень!")
-                st.session_state["planet"] += 1
-                st.session_state["score"] = 0
-                st.session_state["questions"] = generate_questions()
-            elif st.session_state["lives"] <= 0:
-                st.warning("😢 У вас закінчилися життя. Гру завершено.")
-            else:
-                st.session_state["current_question"] = get_new_question()
-            
-            st.experimental_rerun()
-    else:
-        st.info("🎉 Ви завершили всі запитання цього рівня.")
+# Перевірка рівня (лівий блок)
+with col1:
+    if st.session_state["score"] >= 100:
+        st.session_state["planet"] += 1
+        st.session_state["score"] = 0
+        if st.session_state["planet"] > 3:
+            st.balloons()
+            st.success(f"🎉 Вітаємо, {st.session_state['username']}! Ви завершили гру!")
+        else:
+            st.success(f"🎉 Ви перейшли на наступну планету! Планета #{st.session_state['planet']} чекає вас!")
+
+# Таймер для відновлення життя (правий блок)
+with col2:
+    if st.session_state["lives"] < 10:
+        next_life_in = timedelta(minutes=10) - (datetime.now() - st.session_state["last_life_restore"])
+        minutes, seconds = divmod(next_life_in.seconds, 60)
+        st.info(f"⏳ Наступне життя через: {minutes} хв {seconds} с.")
