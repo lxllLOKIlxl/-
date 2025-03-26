@@ -113,13 +113,11 @@ def check_answer():
             else:
                 st.session_state["current_question"] = None
                 st.session_state["level_completed"] = True
-            st.experimental_rerun() # Переміщено сюди
         else:
             st.error("❌ Неправильно! Ви втратили 1 життя.")
             st.session_state["lives"] -= 1
             st.session_state["current_question"] = random.choice(st.session_state["question_pool"]) if st.session_state["question_pool"] else None
             st.session_state["user_answer"] = "" # Очистити поле вводу
-            st.experimental_rerun() # Також переміщено сюди
 
 # Оформлення заголовка гри
 st.title("🚀 Кодонавт: Космічна Пригода")
@@ -161,7 +159,23 @@ if st.session_state["username"]:
             st.write(f"**Запитання:** {st.session_state['current_question']['question']}")
             st.session_state["user_answer"] = st.text_input("📝 Ваша відповідь:", key="answer_input")
             if st.button("Перевірити"):
-                check_answer()
+                if "user_answer" in st.session_state:
+                    if st.session_state["user_answer"].strip().lower() == st.session_state["current_question"]["answer"].lower():
+                        st.success("✅ Правильно! Ви отримали 10 очків.")
+                        st.session_state["score"] += 10
+                        st.session_state["question_pool"].remove(st.session_state["current_question"])
+                        if st.session_state["question_pool"]:
+                            st.session_state["current_question"] = random.choice(st.session_state["question_pool"])
+                            st.session_state["user_answer"] = "" # Очистити поле вводу
+                        else:
+                            st.session_state["current_question"] = None
+                            st.session_state["level_completed"] = True
+                    else:
+                        st.error("❌ Неправильно! Ви втратили 1 життя.")
+                        st.session_state["lives"] -= 1
+                        st.session_state["current_question"] = random.choice(st.session_state["question_pool"]) if st.session_state["question_pool"] else None
+                        st.session_state["user_answer"] = "" # Очистити поле вводу
+                    st.experimental_rerun()
         elif st.session_state["level_completed"]:
             st.balloons()
             st.success(f"🎉 Вітаємо, {st.session_state['username']}! Ви успішно пройшли планету {st.session_state['planet']}!")
