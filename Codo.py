@@ -5,6 +5,9 @@ from datetime import datetime, timedelta
 # Назва гри
 st.title("🚀 Кодонавт: Космічна пригода")
 
+# Лівий стовпець для гри, правий для інформації про гравця
+col1, col2 = st.columns([3, 1])
+
 # Початкові змінні
 if "planet" not in st.session_state:
     st.session_state["planet"] = 1
@@ -17,11 +20,12 @@ if "last_life_restore" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state["username"] = ""
 
-# Введення ніку гравця
-if st.session_state["username"] == "":
-    st.session_state["username"] = st.text_input("👤 Введіть ваш нік:", value="Гравець")
+# Введення ніку гравця (правий блок)
+with col2:
+    if st.session_state["username"] == "":
+        st.session_state["username"] = st.text_input("👤 Введіть ваш нік:", value="Гравець")
 
-# Відновлення життів
+# Оновлення життів кожні 10 хвилин
 if st.session_state["lives"] < 10:
     time_diff = datetime.now() - st.session_state["last_life_restore"]
     if time_diff >= timedelta(minutes=10):
@@ -30,13 +34,15 @@ if st.session_state["lives"] < 10:
         st.session_state["lives"] = min(st.session_state["lives"], 10)
         st.session_state["last_life_restore"] = datetime.now()
 
-# Опис поточного стану
-st.markdown(f"### 🌍 Планета #{st.session_state['planet']}")
-st.markdown(f"💯 Рахунок: {st.session_state['score']}")
-st.markdown(f"❤️ Життя: {st.session_state['lives']} / 10")
-st.markdown(f"👤 Гравець: {st.session_state['username']}")
+# Інформація про гравця (правий блок)
+with col2:
+    st.markdown("### 👤 Інформація про гравця:")
+    st.markdown(f"**Ім'я:** {st.session_state['username']}")
+    st.markdown(f"**❤️ Життя:** {st.session_state['lives']} / 10")
+    st.markdown(f"**💯 Рахунок:** {st.session_state['score']}")
+    st.markdown(f"**🌍 Планета:** {st.session_state['planet']}")
 
-# Питання для рівнів
+# Вибір питання для рівня (лівий блок)
 questions = {
     1: [
         {"question": "Що таке 2 + 2?", "answer": "4"},
@@ -63,37 +69,40 @@ questions = {
     ]
 }
 
-# Вибір питання для рівня
-level_questions = questions[st.session_state["planet"]]
-task = random.choice(level_questions)
+with col1:
+    st.markdown("### 🌌 Питання:")
+    level_questions = questions[st.session_state["planet"]]
+    task = random.choice(level_questions)
+    st.write(task["question"])
+    user_answer = st.text_input("📝 Введіть вашу відповідь:", "")
 
-st.markdown(f"### 🌌 Питання: {task['question']}")
-user_answer = st.text_input("📝 Ваша відповідь:", "")
-
-# Кнопка для перевірки
-if st.button("Перевірити"):
-    if st.session_state["lives"] > 0:
-        if user_answer.strip().lower() == task["answer"].lower():
-            st.session_state["score"] += 10
-            st.success("✅ Правильно! Ви отримали 10 очків.")
+# Механіка перевірки відповіді (лівий блок)
+with col1:
+    if st.button("Перевірити"):
+        if st.session_state["lives"] > 0:
+            if user_answer.strip().lower() == task["answer"].lower():
+                st.session_state["score"] += 10
+                st.success("✅ Правильно! Ви отримали 10 очків.")
+            else:
+                st.session_state["lives"] -= 1
+                st.error("❌ Неправильно! Ви втратили 1 життя.")
         else:
-            st.session_state["lives"] -= 1
-            st.error("❌ Неправильно! Ви втратили 1 життя.")
-    else:
-        st.warning("У вас закінчилися життя. Дочекайтесь відновлення або перезапустіть гру!")
+            st.warning("У вас закінчилися життя. Дочекайтесь відновлення або перезапустіть гру!")
 
-# Перевірка рівня
-if st.session_state["score"] >= 100:
-    st.session_state["planet"] += 1
-    st.session_state["score"] = 0
-    if st.session_state["planet"] > 3:
-        st.balloons()
-        st.success(f"🎉 Вітаємо, {st.session_state['username']}! Ви завершили гру!")
-    else:
-        st.success(f"🎉 Ви перейшли на наступну планету! Планета #{st.session_state['planet']} чекає вас!")
+# Перевірка рівня (лівий блок)
+with col1:
+    if st.session_state["score"] >= 100:
+        st.session_state["planet"] += 1
+        st.session_state["score"] = 0
+        if st.session_state["planet"] > 3:
+            st.balloons()
+            st.success(f"🎉 Вітаємо, {st.session_state['username']}! Ви завершили гру!")
+        else:
+            st.success(f"🎉 Ви перейшли на наступну планету! Планета #{st.session_state['planet']} чекає вас!")
 
-# Таймер для відновлення життя
-if st.session_state["lives"] < 10:
-    next_life_in = timedelta(minutes=10) - (datetime.now() - st.session_state["last_life_restore"])
-    minutes, seconds = divmod(next_life_in.seconds, 60)
-    st.info(f"⏳ Наступне життя через: {minutes} хв {seconds} с.")
+# Таймер для відновлення життя (правий блок)
+with col2:
+    if st.session_state["lives"] < 10:
+        next_life_in = timedelta(minutes=10) - (datetime.now() - st.session_state["last_life_restore"])
+        minutes, seconds = divmod(next_life_in.seconds, 60)
+        st.info(f"⏳ Наступне життя через: {minutes} хв {seconds} с.")
