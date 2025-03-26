@@ -1,78 +1,3 @@
-import pygame
-import random
-import sys
-
-# Ініціалізація Pygame
-pygame.init()
-
-# Налаштування екрану та кольорів
-WIDTH, HEIGHT = 800, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Кодонавт: Космічна Пригода")
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
-
-# Шрифти
-font = pygame.font.SysFont("Arial", 30)
-
-# Клас для корабля
-class SpaceShip(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.image = pygame.Surface((50, 50))
-        self.image.fill(BLUE)
-        self.rect = self.image.get_rect()
-        self.rect.center = (WIDTH // 2, HEIGHT - 50)
-        self.speed = 5
-
-    def update(self, keys):
-        if keys[pygame.K_LEFT] and self.rect.left > 0:
-            self.rect.x -= self.speed
-        if keys[pygame.K_RIGHT] and self.rect.right < WIDTH:
-            self.rect.x += self.speed
-
-# Клас для ворогів
-class Enemy(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.image = pygame.Surface((50, 50))
-        self.image.fill(RED)
-        self.rect = self.image.get_rect()
-        self.rect.x = random.randint(0, WIDTH - 50)
-        self.rect.y = random.randint(-100, -40)
-        self.speed = random.randint(2, 5)
-
-    def update(self):
-        self.rect.y += self.speed
-        if self.rect.top > HEIGHT:
-            self.rect.y = random.randint(-100, -40)
-            self.rect.x = random.randint(0, WIDTH - 50)
-
-# Клас для проектилів
-class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        super().__init__()
-        self.image = pygame.Surface((5, 10))
-        self.image.fill(YELLOW)
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        self.speed = 7
-
-    def update(self):
-        self.rect.y -= self.speed
-        if self.rect.bottom < 0:
-            self.kill()
-
-# Функція для відображення тексту на екрані
-def draw_text(text, x, y, color):
-    text_surface = font.render(text, True, color)
-    screen.blit(text_surface, (x, y))
-
 # Головна функція гри
 def game():
     clock = pygame.time.Clock()
@@ -107,9 +32,14 @@ def game():
                     all_sprites.add(bullet)
                     bullets.add(bullet)
 
-        # Оновлення стану спрайтів
+        # Оновлення космічного корабля (передаємо keys тільки космічному кораблю)
         keys = pygame.key.get_pressed()
-        all_sprites.update(keys)
+        player.update(keys)
+
+        # Оновлення інших спрайтів (без передачі keys)
+        for sprite in all_sprites:
+            if isinstance(sprite, Enemy) or isinstance(sprite, Bullet):
+                sprite.update()
 
         # Перевірка зіткнень між кулями та ворогами
         for bullet in bullets:
@@ -136,6 +66,3 @@ def game():
 
     pygame.quit()
     sys.exit()
-
-if __name__ == "__main__":
-    game()
