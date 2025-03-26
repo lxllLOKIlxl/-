@@ -1,39 +1,96 @@
 import streamlit as st
 import random
+from datetime import datetime, timedelta
+
+# Космічний фон
+st.markdown(
+    """
+    <style>
+        body {
+            background-image: url('https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d');
+            background-size: cover;
+            color: white;
+        }
+        .stTextInput, .stButton > button {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+        }
+        .stTextInput input {
+            color: white;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # Назва гри
-st.title("Кодонавт")
+st.title("🚀 Кодонавт: Космічна пригода")
 
 # Початкові змінні
 if "planet" not in st.session_state:
     st.session_state["planet"] = 1
 if "score" not in st.session_state:
     st.session_state["score"] = 0
+if "lives" not in st.session_state:
+    st.session_state["lives"] = 10
+if "last_life_restore" not in st.session_state:
+    st.session_state["last_life_restore"] = datetime.now()
+if "username" not in st.session_state:
+    st.session_state["username"] = st.text_input("Введіть ваш нік:", value="Гравець")
 
-# Опис поточної планети
-st.write(f"🌍 Ви на планеті #{st.session_state['planet']}. Ваша місія — вирішити задачу, щоб продовжити подорож.")
-st.write(f"Ваш поточний рахунок: {st.session_state['score']}")
+# Відновлення життів
+if st.session_state["lives"] < 10:
+    time_diff = datetime.now() - st.session_state["last_life_restore"]
+    if time_diff >= timedelta(minutes=10):
+        restore_lives = time_diff.seconds // 600
+        st.session_state["lives"] += restore_lives
+        st.session_state["lives"] = min(st.session_state["lives"], 10)
+        st.session_state["last_life_restore"] = datetime.now()
+
+# Опис поточного стану
+st.write(f"🌍 Планета #{st.session_state['planet']}. Ваша мета: набрати 100 очків, щоб перейти на наступний рівень!")
+st.write(f"👤 Гравець: {st.session_state['username']}")
+st.write(f"💯 Рахунок: {st.session_state['score']}")
+st.write(f"❤️ Життя: {st.session_state['lives']} / 10")
 
 # Задача
 task = random.choice([
     {"question": "Що таке 2 + 2?", "answer": "4"},
     {"question": "Яка планета третя від Сонця?", "answer": "Земля"},
-    {"question": "Який результат: 10 // 3?", "answer": "3"}
+    {"question": "Який результат: 10 // 3?", "answer": "3"},
+    {"question": "Яка найближча зірка до Землі?", "answer": "Сонце"}
 ])
 
-st.write("Задача:", task["question"])
-user_answer = st.text_input("Ваша відповідь:")
+st.markdown(f"### 🌌 Питання: {task['question']}")
+user_answer = st.text_input("Ваша відповідь:", "")
 
 # Кнопка для перевірки
 if st.button("Перевірити"):
-    if user_answer.lower() == task["answer"].lower():
-        st.success("Правильно! 🚀 Ви переходите на наступну планету!")
-        st.session_state["planet"] += 1
-        st.session_state["score"] += 10
+    if st.session_state["lives"] > 0:
+        if user_answer.strip().lower() == task["answer"].lower():
+            st.session_state["score"] += 10
+            st.success("✅ Правильно! Ви отримали 10 очків.")
+        else:
+            st.session_state["lives"] -= 1
+            st.error("❌ Неправильно! Ви втратили 1 життя.")
     else:
-        st.error("Неправильно 😢 Спробуйте ще раз!")
+        st.warning("У вас закінчилися життя. Дочекайтесь відновлення, або перезапустіть гру!")
 
-# Завершення
+# Перевірка рівня
+if st.session_state["score"] >= 100:
+    st.session_state["planet"] += 1
+    st.session_state["score"] = 0
+    st.write("🎉 Ви перейшли на наступну планету!")
+
+# Таймер для відновлення життя
+if st.session_state["lives"] < 10:
+    next_life_in = timedelta(minutes=10) - (datetime.now() - st.session_state["last_life_restore"])
+    minutes, seconds = divmod(next_life_in.seconds, 60)
+    st.write(f"⏳ Наступне життя через: {minutes} хв {seconds} с.")
+
+# Вітання при завершенні рівня
 if st.session_state["planet"] > 5:
     st.balloons()
-    st.write(f"🎉 Вітаємо! Ви дослідили всі планети! Ваш фінальний рахунок: {st.session_state['score']}")
+    st.write(f"🎉 Вітаємо, {st.session_state['username']}! Ви успішно завершили космічну пригоду!")
