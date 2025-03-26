@@ -117,7 +117,7 @@ if not st.session_state["username"]:
     if st.session_state["username"]:
         st.info(f"Привіт, {st.session_state['username']}! Готові до космічної подорожі?")
         load_questions()
-        st.experimental_rerun()
+        # st.experimental_rerun() <--- ВИДАЛЕНО ЦЕЙ РЯДОК
 
 # Основний блок гри
 if st.session_state["username"]:
