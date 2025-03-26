@@ -1,203 +1,141 @@
-import streamlit as st
+import pygame
 import random
-from datetime import datetime, timedelta
-import time
+import sys
 
-# Налаштування сторінки
-st.set_page_config(page_title="Кодонавт: Космічна Пригода", page_icon="🚀")
+# Ініціалізація Pygame
+pygame.init()
 
-# Функція для створення запитань за рівнями
-def generate_questions():
-    return {
-        1: [
-            {"question": "Що таке 2 + 2?", "answer": "4", "difficulty": "легко"},
-            {"question": "Яка планета третя від Сонця?", "answer": "Земля", "difficulty": "легко"},
-            {"question": "Який результат: 10 // 3?", "answer": "3", "difficulty": "легко"},
-            {"question": "Яка найближча зірка до Землі?", "answer": "Сонце", "difficulty": "легко"},
-            {"question": "Столиця України?", "answer": "Київ", "difficulty": "легко"},
-        ],
-        2: [
-            {"question": "Скільки планет у Сонячній системі?", "answer": "8", "difficulty": "середньо"},
-            {"question": "Що таке 9 * 9?", "answer": "81", "difficulty": "середньо"},
-            {"question": "Яка планета найближче до Сонця?", "answer": "Меркурій", "difficulty": "середньо"},
-            {"question": "Яка формула води?", "answer": "H2O", "difficulty": "середньо"},
-            {"question": "Хто написав 'Кобзар'?", "answer": "Тарас Шевченко", "difficulty": "середньо"},
-        ],
-        3: [
-            {"question": "Що таке 12 * 12?", "answer": "144", "difficulty": "складно"},
-            {"question": "Який супутник обертається навколо Землі?", "answer": "Місяць", "difficulty": "складно"},
-            {"question": "Яка хімічна формула вуглекислого газу?", "answer": "CO2", "difficulty": "складно"},
-            {"question": "Хто відкрив пеніцилін?", "answer": "Александр Флемінг", "difficulty": "складно"},
-            {"question": "Яка найвища гора у світі?", "answer": "Еверест", "difficulty": "складно"},
-        ],
-        4: [
-            {"question": "Яка столиця Японії?", "answer": "Токіо", "difficulty": "дуже складно"},
-            {"question": "Що таке 2 в ступені 8?", "answer": "256", "difficulty": "дуже складно"},
-            {"question": "Яка планета відома своїми кільцями?", "answer": "Сатурн", "difficulty": "дуже складно"},
-            {"question": "Хто є автором 'Гамлета'?", "answer": "Вільям Шекспір", "difficulty": "дуже складно"},
-            {"question": "Скільки нот в октаві?", "answer": "8", "difficulty": "дуже складно"},
-        ]
-    }
+# Налаштування екрану та кольорів
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Кодонавт: Космічна Пригода")
 
-# Початкова ініціалізація змінних сесії
-if "username" not in st.session_state:
-    st.session_state["username"] = None
-if "planet" not in st.session_state:
-    st.session_state["planet"] = 1
-if "score" not in st.session_state:
-    st.session_state["score"] = 0
-if "lives" not in st.session_state:
-    st.session_state["lives"] = 3
-if "last_life_restore" not in st.session_state:
-    st.session_state["last_life_restore"] = datetime.now()
-if "current_question" not in st.session_state:
-    st.session_state["current_question"] = None
-if "question_pool" not in st.session_state:
-    st.session_state["question_pool"] = []
-if "level_completed" not in st.session_state:
-    st.session_state["level_completed"] = False
-if "game_over" not in st.session_state:
-    st.session_state["game_over"] = False
-if "hint_used" not in st.session_state:
-    st.session_state["hint_used"] = False
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
 
-# Функція для завантаження запитань для поточного рівня
-def load_questions():
-    st.session_state["question_pool"] = generate_questions().get(st.session_state["planet"], [])
-    if st.session_state["question_pool"]:
-        random.shuffle(st.session_state["question_pool"])
-        st.session_state["current_question"] = st.session_state["question_pool"].pop()
-        st.session_state["hint_used"] = False
-    else:
-        st.session_state["current_question"] = None
-        st.session_state["level_completed"] = True
+# Шрифти
+font = pygame.font.SysFont("Arial", 30)
 
-# Перехід до наступного рівня
-def next_level():
-    st.session_state["planet"] += 1
-    st.session_state["score"] += st.session_state.get("level_score", 0) # Зараховуємо рахунок за попередній рівень
-    st.session_state["lives"] = 3
-    st.session_state["level_completed"] = False
-    st.session_state["level_score"] = 0
-    load_questions()
+# Клас для корабля
+class SpaceShip(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface((50, 50))
+        self.image.fill(BLUE)
+        self.rect = self.image.get_rect()
+        self.rect.center = (WIDTH // 2, HEIGHT - 50)
+        self.speed = 5
 
-# Перевірка відповіді
-def check_answer():
-    if st.session_state["current_question"] and "user_answer" in st.session_state:
-        if st.session_state["user_answer"].strip().lower() == st.session_state["current_question"]["answer"].lower():
-            st.success(f"✅ Правильно! Ви отримали 10 очків ({st.session_state['current_question']['difficulty']}).")
-            st.session_state["score"] += 10
-            st.session_state["level_score"] = st.session_state.get("level_score", 0) + 10
-            st.session_state["user_answer"] = ""
-            st.session_state["current_question"] = None # Питання видаляється після відповіді
-            st.experimental_rerun()
-        else:
-            st.error(f"❌ Неправильно! Спробуйте ще раз. ({st.session_state['current_question']['difficulty']})")
-            st.session_state["lives"] -= 1
-            st.session_state["user_answer"] = ""
+    def update(self, keys):
+        if keys[pygame.K_LEFT] and self.rect.left > 0:
+            self.rect.x -= self.speed
+        if keys[pygame.K_RIGHT] and self.rect.right < WIDTH:
+            self.rect.x += self.speed
 
-# Показати підказку
-def show_hint():
-    if st.session_state["current_question"] and not st.session_state["hint_used"]:
-        answer = st.session_state["current_question"]["answer"]
-        if len(answer) > 3:
-            hint = "*" * (len(answer) - 2) + answer[-2:]
-            st.info(f"💡 Підказка: Відповідь закінчується на '{answer[-2:]}'.")
-            st.session_state["hint_used"] = True
-        else:
-            st.info("🤔 Підказка для цієї відповіді недоступна.")
+# Клас для ворогів
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface((50, 50))
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.rect.x = random.randint(0, WIDTH - 50)
+        self.rect.y = random.randint(-100, -40)
+        self.speed = random.randint(2, 5)
 
-# Оформлення гри
-st.title("🚀 Кодонавт: Космічна Пригода")
-st.markdown("---")
+    def update(self):
+        self.rect.y += self.speed
+        if self.rect.top > HEIGHT:
+            self.rect.y = random.randint(-100, -40)
+            self.rect.x = random.randint(0, WIDTH - 50)
 
-# Введення імені гравця
-if not st.session_state["username"]:
-    st.session_state["username"] = st.text_input("Введіть ваше ім'я, юний коднавте:")
-    if st.session_state["username"]:
-        st.info(f"Привіт, {st.session_state['username']}! Готові до космічної подорожі?")
-        load_questions()
-        # st.experimental_rerun() <--- ВИДАЛЕНО ЦЕЙ РЯДОК
+# Клас для проектилів
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((5, 10))
+        self.image.fill(YELLOW)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.speed = 7
 
-# Основний блок гри
-if st.session_state["username"]:
-    with st.sidebar:
-        st.header(f"Інформація для {st.session_state['username']}")
-        st.write(f"**❤️ Життя:** {st.session_state['lives']}")
-        st.write(f"**💯 Загальний рахунок:** {st.session_state['score']}")
-        st.write(f"**🌍 Планета:** {st.session_state['planet']}")
-        st.write(f"**⭐ Рахунок на планеті:** {st.session_state.get('level_score', 0)}")
+    def update(self):
+        self.rect.y -= self.speed
+        if self.rect.bottom < 0:
+            self.kill()
 
-        if st.session_state["lives"] > 0 and not st.session_state["game_over"]:
-            if st.button("Здатись"):
-                st.session_state["lives"] = 0
-                st.experimental_rerun()
+# Функція для відображення тексту на екрані
+def draw_text(text, x, y, color):
+    text_surface = font.render(text, True, color)
+    screen.blit(text_surface, (x, y))
 
-    st.header(f"🪐 Планета {st.session_state['planet']}")
+# Головна функція гри
+def game():
+    clock = pygame.time.Clock()
 
-    if st.session_state["lives"] > 0 and not st.session_state["game_over"]:
-        if st.session_state["current_question"]:
-            st.subheader("❓ Запитання:")
-            st.markdown(f"> {st.session_state['current_question']['question']}")
-            st.session_state["user_answer"] = st.text_input("Ваша відповідь:", key="answer_input")
+    # Групи спрайтів
+    all_sprites = pygame.sprite.Group()
+    enemies = pygame.sprite.Group()
+    bullets = pygame.sprite.Group()
 
-            cols = st.columns(2)
-            with cols[0]:
-                if st.button("Перевірити"):
-                    check_answer()
-                    if st.session_state["current_question"] is None and st.session_state["lives"] > 0:
-                        if not st.session_state["question_pool"]:
-                            st.session_state["level_completed"] = True
-                            st.experimental_rerun()
-                        else:
-                            st.session_state["current_question"] = st.session_state["question_pool"].pop()
-                            st.session_state["hint_used"] = False
-                            st.experimental_rerun()
-            with cols[1]:
-                if st.button("Підказка"):
-                    show_hint()
+    # Створення космічного корабля
+    player = SpaceShip()
+    all_sprites.add(player)
 
-        elif st.session_state["level_completed"]:
-            st.balloons()
-            st.success(f"🎉 Вітаємо, {st.session_state['username']}! Ви пройшли планету {st.session_state['planet']}!")
-            if st.session_state["planet"] < len(generate_questions()):
-                if st.button(f"🚀 Вирушити на планету {st.session_state['planet'] + 1}"):
-                    next_level()
-                    st.experimental_rerun()
-            else:
-                st.info("✨ Ви дослідили всі планети! Ваша космічна подорож завершена!")
-                st.session_state["game_over"] = True
-                st.experimental_rerun()
-        else:
-            if st.session_state["lives"] > 0 and not st.session_state["game_over"]:
-                if not st.session_state["question_pool"]:
-                    st.info("🤔 Запитання на цій планеті закінчились. Перейдіть на наступну.")
-                    if st.session_state["planet"] < len(generate_questions()):
-                        if st.button(f"➡️ Перейти на планету {st.session_state['planet'] + 1}"):
-                            next_level()
-                            st.experimental_rerun()
-                    else:
-                        st.info("✨ Ви дослідили всі планети! Ваша космічна подорож завершена!")
-                        st.session_state["game_over"] = True
-                        st.experimental_rerun()
-                else:
-                    load_questions()
-                    st.experimental_rerun()
+    # Створення ворогів
+    for _ in range(5):
+        enemy = Enemy()
+        all_sprites.add(enemy)
+        enemies.add(enemy)
 
-    elif st.session_state["lives"] <= 0:
-        st.error(f"💀 Гра закінчена, {st.session_state['username']}! Ви використали всі життя.")
-        st.subheader(f"Ваш фінальний рахунок: {st.session_state['score']}")
-        if st.button("🔄 Спробувати знову"):
-            for key in st.session_state.keys():
-                del st.session_state[key]
-            st.experimental_rerun()
+    score = 0
+    running = True
+    while running:
+        screen.fill(BLACK)
 
-    elif st.session_state["game_over"]:
-        st.info("✨ Дякуємо за гру, коднавте!")
-        if st.button("🔄 Почати нову гру"):
-            for key in st.session_state.keys():
-                del st.session_state[key]
-            st.experimental_rerun()
+        # Обробка подій
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    bullet = Bullet(player.rect.centerx, player.rect.top)
+                    all_sprites.add(bullet)
+                    bullets.add(bullet)
 
-else:
-    st.info("Будь ласка, введіть ваше ім'я, щоб розпочати.")
+        # Оновлення стану спрайтів
+        keys = pygame.key.get_pressed()
+        all_sprites.update(keys)
+
+        # Перевірка зіткнень між кулями та ворогами
+        for bullet in bullets:
+            hits = pygame.sprite.spritecollide(bullet, enemies, True)
+            for hit in hits:
+                score += 1
+                bullet.kill()
+                # Створення нового ворога після знищення
+                new_enemy = Enemy()
+                all_sprites.add(new_enemy)
+                enemies.add(new_enemy)
+
+        # Виведення тексту на екран
+        draw_text(f"Score: {score}", 10, 10, WHITE)
+
+        # Малювання спрайтів на екрані
+        all_sprites.draw(screen)
+
+        # Оновлення екрану
+        pygame.display.flip()
+
+        # Обмеження кадрів в секунду
+        clock.tick(60)
+
+    pygame.quit()
+    sys.exit()
+
+if __name__ == "__main__":
+    game()
