@@ -1,146 +1,99 @@
-import pygame
+import streamlit as st
 import random
-import sys
 
-# Ініціалізація Pygame
-pygame.init()
+# Налаштування сторінки
+st.set_page_config(page_title="Кодонавт: Космічна Пригода", layout="centered")
+st.title("🚀 Кодонавт: Космічна Пригода")
+st.markdown("Уникайте ворогів та знищуйте їх, щоб набрати очки!")
 
-# Налаштування екрану та кольорів
-WIDTH, HEIGHT = 800, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Кодонавт: Космічна Пригода")
+# Початкові змінні
+if "score" not in st.session_state:
+    st.session_state["score"] = 0
+if "lives" not in st.session_state:
+    st.session_state["lives"] = 3
+if "enemies" not in st.session_state:
+    st.session_state["enemies"] = [random.randint(0, 10) for _ in range(5)]
+if "player_position" not in st.session_state:
+    st.session_state["player_position"] = 5
+if "bullets" not in st.session_state:
+    st.session_state["bullets"] = []
 
-# Кольори
-BACKGROUND_COLOR = (30, 30, 30)  # Темно-сірий фон
-SHIP_COLOR = (255, 255, 255)     # Білий колір для корабля
-ENEMY_COLOR = (255, 0, 0)        # Червоний для ворогів
-BULLET_COLOR = (255, 255, 0)     # Жовті кулі
-TEXT_COLOR = (255, 255, 255)     # Білий колір тексту
+# Функції гри
+def move_player(direction):
+    if direction == "left" and st.session_state["player_position"] > 0:
+        st.session_state["player_position"] -= 1
+    elif direction == "right" and st.session_state["player_position"] < 10:
+        st.session_state["player_position"] += 1
 
-# Шрифти
-font = pygame.font.SysFont("Arial", 30)
+def shoot():
+    st.session_state["bullets"].append(st.session_state["player_position"])
 
-# Клас для корабля
-class SpaceShip(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.image = pygame.Surface((50, 50))
-        self.image.fill(SHIP_COLOR)
-        self.rect = self.image.get_rect()
-        self.rect.center = (WIDTH // 2, HEIGHT - 50)
-        self.speed = 5
+def move_enemies():
+    new_enemies = []
+    for enemy in st.session_state["enemies"]:
+        if enemy < 10:
+            new_enemies.append(enemy + 1)
+        else:
+            st.session_state["lives"] -= 1
+    st.session_state["enemies"] = new_enemies
 
-    def update(self, keys):
-        if keys[pygame.K_LEFT] and self.rect.left > 0:
-            self.rect.x -= self.speed
-        if keys[pygame.K_RIGHT] and self.rect.right < WIDTH:
-            self.rect.x += self.speed
+def check_hits():
+    hits = []
+    for bullet in st.session_state["bullets"]:
+        if bullet in st.session_state["enemies"]:
+            st.session_state["score"] += 1
+            hits.append(bullet)
+    st.session_state["bullets"] = [b for b in st.session_state["bullets"] if b not in hits]
+    st.session_state["enemies"] = [e for e in st.session_state["enemies"] if e not in hits]
 
-# Клас для ворогів
-class Enemy(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.image = pygame.Surface((50, 50))
-        self.image.fill(ENEMY_COLOR)
-        self.rect = self.image.get_rect()
-        self.rect.x = random.randint(0, WIDTH - 50)
-        self.rect.y = random.randint(-100, -40)
-        self.speed = random.randint(2, 5)
+def game_over():
+    st.error("💥 Гру завершено! Ваш рахунок: " + str(st.session_state["score"]))
+    st.button("🔄 Почати заново", on_click=reset_game)
 
-    def update(self):
-        self.rect.y += self.speed
-        if self.rect.top > HEIGHT:
-            self.rect.y = random.randint(-100, -40)
-            self.rect.x = random.randint(0, WIDTH - 50)
+def reset_game():
+    st.session_state["score"] = 0
+    st.session_state["lives"] = 3
+    st.session_state["enemies"] = [random.randint(0, 10) for _ in range(5)]
+    st.session_state["player_position"] = 5
+    st.session_state["bullets"] = []
 
-# Клас для проектилів
-class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        super().__init__()
-        self.image = pygame.Surface((5, 10))
-        self.image.fill(BULLET_COLOR)
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        self.speed = 7
+# Логіка гри
+if st.session_state["lives"] > 0:
+    # Рух ворогів
+    move_enemies()
 
-    def update(self):
-        self.rect.y -= self.speed
-        if self.rect.bottom < 0:
-            self.kill()
+    # Перевірка попадань
+    check_hits()
 
-# Функція для відображення тексту на екрані
-def draw_text(text, x, y, color):
-    text_surface = font.render(text, True, color)
-    screen.blit(text_surface, (x, y))
+    # Відображення гри
+    st.write("### Поле гри:")
+    for i in range(11):
+        if i == st.session_state["player_position"]:
+            st.write("🚀", end=" ")
+        elif i in st.session_state["enemies"]:
+            st.write("💣", end=" ")
+        elif i in st.session_state["bullets"]:
+            st.write("🔫", end=" ")
+        else:
+            st.write("⬛", end=" ")
+    st.write("\n")
 
-# Головна функція гри
-def game():
-    clock = pygame.time.Clock()
+    # Дії гравця
+    st.write("### Управління:")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("⬅️ Вліво"):
+            move_player("left")
+    with col2:
+        if st.button("🚀 Вистрілити"):
+            shoot()
+    with col3:
+        if st.button("➡️ Вправо"):
+            move_player("right")
 
-    # Групи спрайтів
-    all_sprites = pygame.sprite.Group()
-    enemies = pygame.sprite.Group()
-    bullets = pygame.sprite.Group()
+    # Інформація про гру
+    st.write(f"**Рахунок:** {st.session_state['score']}")
+    st.write(f"**Життя:** {st.session_state['lives']}")
 
-    # Створення космічного корабля
-    player = SpaceShip()
-    all_sprites.add(player)
-
-    # Створення ворогів
-    for _ in range(5):
-        enemy = Enemy()
-        all_sprites.add(enemy)
-        enemies.add(enemy)
-
-    score = 0
-    running = True
-    while running:
-        screen.fill(BACKGROUND_COLOR)  # Зміна фону на темно-сірий
-
-        # Обробка подій
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    bullet = Bullet(player.rect.centerx, player.rect.top)
-                    all_sprites.add(bullet)
-                    bullets.add(bullet)
-
-        # Оновлення космічного корабля
-        keys = pygame.key.get_pressed()
-        player.update(keys)
-
-        # Оновлення інших спрайтів
-        for sprite in all_sprites:
-            if isinstance(sprite, Enemy) or isinstance(sprite, Bullet):
-                sprite.update()
-
-        # Перевірка зіткнень між кулями та ворогами
-        for bullet in bullets:
-            hits = pygame.sprite.spritecollide(bullet, enemies, True)
-            for hit in hits:
-                score += 1
-                bullet.kill()
-                # Створення нового ворога після знищення
-                new_enemy = Enemy()
-                all_sprites.add(new_enemy)
-                enemies.add(new_enemy)
-
-        # Виведення тексту на екран
-        draw_text(f"Score: {score}", 10, 10, TEXT_COLOR)
-
-        # Малювання спрайтів на екрані
-        all_sprites.draw(screen)
-
-        # Оновлення екрану
-        pygame.display.flip()
-
-        # Обмеження кадрів в секунду
-        clock.tick(60)
-
-    pygame.quit()
-    sys.exit()
-
-if __name__ == "__main__":
-    game()
+else:
+    game_over()
