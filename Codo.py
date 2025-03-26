@@ -2,28 +2,84 @@ import streamlit as st
 import random
 from datetime import datetime, timedelta
 
-# Космічний фон
-st.markdown(
-    """
-    <style>
-        body {
-            background-image: url('https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d');
-            background-size: cover;
-            color: white;
-        }
-        .stTextInput, .stButton > button {
-            background-color: rgba(0, 0, 0, 0.6);
-            border-radius: 10px;
-            color: white;
-            font-weight: bold;
-        }
-        .stTextInput input {
-            color: white;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Функція для встановлення стилю
+def set_background(theme):
+    if theme == "Космічний фон":
+        st.markdown(
+            """
+            <style>
+                body {
+                    background-image: url('https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d');
+                    background-size: cover;
+                    color: white;
+                }
+                .stTextInput, .stButton > button {
+                    background-color: rgba(0, 0, 0, 0.6);
+                    border-radius: 10px;
+                    color: white;
+                    font-weight: bold;
+                }
+                .stTextInput input {
+                    color: white;
+                }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+    elif theme == "Чорний металік":
+        st.markdown(
+            """
+            <style>
+                body {
+                    background-color: #1a1a1a;
+                    color: white;
+                }
+                .stTextInput, .stButton > button {
+                    background-color: #333;
+                    border-radius: 10px;
+                    color: white;
+                    font-weight: bold;
+                }
+                .stTextInput input {
+                    color: white;
+                }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+    elif theme == "Синій металік":
+        st.markdown(
+            """
+            <style>
+                body {
+                    background-color: #003366;
+                    color: white;
+                }
+                .stTextInput, .stButton > button {
+                    background-color: #00509E;
+                    border-radius: 10px;
+                    color: white;
+                    font-weight: bold;
+                }
+                .stTextInput input {
+                    color: white;
+                }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+# Початкова тема
+if "theme" not in st.session_state:
+    st.session_state["theme"] = "Космічний фон"
+
+# Вибір теми
+theme = st.selectbox("🌌 Виберіть фон:", ["Космічний фон", "Чорний металік", "Синій металік"])
+if theme != st.session_state["theme"]:
+    st.session_state["theme"] = theme
+
+# Встановлення вибраного фону
+set_background(st.session_state["theme"])
 
 # Назва гри
 st.title("🚀 Кодонавт: Космічна пригода")
