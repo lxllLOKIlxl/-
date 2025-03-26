@@ -2,3 +2,5 @@ streamlit
 matplotlib
 pyserial
 pygame
+random
+sys
