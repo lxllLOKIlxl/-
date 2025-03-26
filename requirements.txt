@@ -1,3 +1,4 @@
 streamlit
 matplotlib
 pyserial
+pygame
