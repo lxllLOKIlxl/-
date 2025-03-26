@@ -2,6 +2,35 @@ import streamlit as st
 import random
 from datetime import datetime, timedelta
 
+# Ініціалізація прапорця для перезапуску гри на самому початку
+if "reset_game" not in st.session_state:
+    st.session_state["reset_game"] = False
+
+# Перевірка та виконання перезапуску гри
+if st.session_state["reset_game"]:
+    for key in st.session_state.keys():
+        del st.session_state[key]
+    st.session_state["reset_game"] = False
+    st.experimental_rerun()
+
+# Початкова ініціалізація інших змінних сесії
+if "username" not in st.session_state:
+    st.session_state["username"] = None
+if "planet" not in st.session_state:
+    st.session_state["planet"] = 1
+if "score" not in st.session_state:
+    st.session_state["score"] = 0
+if "lives" not in st.session_state:
+    st.session_state["lives"] = 10
+if "last_life_restore" not in st.session_state:
+    st.session_state["last_life_restore"] = datetime.now()
+if "current_question" not in st.session_state:
+    st.session_state["current_question"] = None
+if "question_pool" not in st.session_state:
+    st.session_state["question_pool"] = []
+if "level_completed" not in st.session_state:
+    st.session_state["level_completed"] = False
+
 # Функція для створення запитань за рівнями
 def generate_questions():
     return {
@@ -54,32 +83,6 @@ def generate_questions():
             {"question": "Що таке об'єм куба зі стороною 3?", "answer": "27"}
         ]
     }
-
-# Початкова ініціалізація змінних сесії
-if "reset_game" not in st.session_state:
-    st.session_state["reset_game"] = False
-if st.session_state["reset_game"]:
-    for key in st.session_state.keys():
-        del st.session_state[key]
-    st.session_state["reset_game"] = False
-    st.experimental_rerun()
-
-if "username" not in st.session_state:
-    st.session_state["username"] = None
-if "planet" not in st.session_state:
-    st.session_state["planet"] = 1
-if "score" not in st.session_state:
-    st.session_state["score"] = 0
-if "lives" not in st.session_state:
-    st.session_state["lives"] = 10
-if "last_life_restore" not in st.session_state:
-    st.session_state["last_life_restore"] = datetime.now()
-if "current_question" not in st.session_state:
-    st.session_state["current_question"] = None
-if "question_pool" not in st.session_state:
-    st.session_state["question_pool"] = []
-if "level_completed" not in st.session_state:
-    st.session_state["level_completed"] = False
 
 # Завантаження запитань для поточного рівня
 def load_questions():
