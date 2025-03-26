@@ -38,12 +38,12 @@ def generate_questions():
             {"question": "Що таке 9 * 9?", "answer": "81"},
             {"question": "Яка планета найближче до Сонця?", "answer": "Меркурій"},
             {"question": "Який рік має 366 днів?", "answer": "Високосний"},
-            # Додайте ще 16 питань
+            # Додайте ще питання
         ],
         3: [
             {"question": "Що таке 12 * 12?", "answer": "144"},
             {"question": "Який супутник обертається навколо Землі?", "answer": "Місяць"},
-            # Додайте ще 28 питань
+            # Додайте ще питання
         ]
     }
 
@@ -71,10 +71,10 @@ st.markdown("---")
 
 # Введення імені гравця
 if st.session_state["username"] is None:
-    st.session_state["username"] = st.text_input("Введіть ваше ім'я:", value="Гравець")
+    st.session_state["username"] = st.text_input("Введіть ваше ім'я:")
     if st.session_state["username"]:
-        st.success(f"Ім'я збережено: {st.session_state['username']}")
-        st.stop()
+        st.session_state["current_question"] = get_new_question()
+        st.experimental_rerun()
 
 # Панель з інформацією про гравця
 with st.sidebar:
@@ -99,12 +99,9 @@ with st.sidebar:
 
 # Основний блок гри
 st.header("🌌 Ваша місія")
-if st.session_state["current_question"] is None:
-    st.session_state["current_question"] = get_new_question()
-
 if st.session_state["current_question"]:
     st.write(f"**Запитання:** {st.session_state['current_question']['question']}")
-    user_answer = st.text_input("📝 Ваша відповідь:", key="answer_input")
+    user_answer = st.text_input("📝 Ваша відповідь:")
 
     if st.button("Перевірити"):
         if user_answer.strip().lower() == st.session_state["current_question"]["answer"].lower():
@@ -123,5 +120,6 @@ if st.session_state["current_question"]:
             st.warning("😢 У вас закінчилися життя. Гру завершено.")
         else:
             st.session_state["current_question"] = get_new_question()
+            st.experimental_rerun()
 else:
     st.info("🎉 Ви завершили всі запитання цього рівня. Натисніть, щоб перейти далі.")
