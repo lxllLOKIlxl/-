@@ -1,5 +1,6 @@
 streamlit
 firebase-admin
 pillow
+matplotlib
 numpy
-requests
+sympy
