@@ -4,25 +4,8 @@ from firebase_admin import credentials, db
 import json
 import io
 from PIL import Image
-import matplotlib.pyplot as plt
-import numpy as np
-import sympy as sp
-import threading
-import time
 
-# Функція для завантаження перекладів
-def load_translations(lang):
-    try:
-        with open(f"translations/{lang}.json", "r", encoding="utf-8") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        st.error(f"Помилка завантаження: файл '{lang}.json' не знайдено.")
-        return {}
-    except Exception as e:
-        st.error(f"Сталася помилка: {e}")
-        return {}
-
-# Ініціалізація Firebase через Streamlit Secrets (перевіряємо, чи вже ініціалізовано)
+# Ініціалізація Firebase (перевіряємо, чи вже запущено)
 if not firebase_admin._apps:
     cred = credentials.Certificate({
         "type": st.secrets["firebase"]["type"],
@@ -37,34 +20,32 @@ if not firebase_admin._apps:
         "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"]
     })
     firebase_admin.initialize_app(cred, {
-        'databaseURL': st.secrets["firebase"]["databaseURL"]
+        "databaseURL": st.secrets["firebase"]["databaseURL"]
     })
 
-# Функція для завантаження фото у Firebase
+# Функція для збереження фото у Firebase
 def upload_photo(image_file):
     image_data = image_file.read()
-    image_base64 = image_data.hex()  # Конвертація у HEX
+    image_base64 = image_data.hex()  # Конвертуємо у HEX
     return image_base64
 
-st.title("Sm: Галерея фото на Firebase")
+st.title("Sm: Галерея фото та повідомлень")
 
 # Завантаження фото
 uploaded_file = st.file_uploader("Завантажте фото", type=["jpg", "png", "jpeg"])
-if uploaded_file:
+description = st.text_area("Опишіть фото тут")
+
+if uploaded_file and st.button("Зберегти фото"):
     image_data = upload_photo(uploaded_file)
-    description = st.text_area("Опишіть фото тут")
+    ref = db.reference("photos")
+    ref.push({
+        "image": image_data,
+        "description": description
+    })
+    st.success("Фото успішно збережене!")
 
-    if st.button("Зберегти"):
-        ref = db.reference("photos")
-        ref.push({
-            "image": image_data,
-            "description": description
-        })
-        st.success("Фото успішно збережене!")
-
-# Відображення всіх фото з Firebase
+# Відображення галереї фото
 st.subheader("📸 Галерея")
-
 photos_ref = db.reference("photos").get()
 if photos_ref:
     for photo_id, photo_data in photos_ref.items():
@@ -72,3 +53,22 @@ if photos_ref:
         image = Image.open(io.BytesIO(image_bytes))
         st.image(image, use_container_width=True)
         st.write(f"**Опис:** {photo_data['description']}")
+
+# Форма для повідомлень
+st.subheader("💬 Чат")
+message = st.text_input("Напишіть повідомлення")
+
+if st.button("Надіслати повідомлення"):
+    ref = db.reference("messages")
+    ref.push({
+        "text": message,
+        "timestamp": db.ServerValue.TIMESTAMP  # Додаємо час надсилання
+    })
+    st.success("Повідомлення надіслано!")
+
+# Відображення повідомлень
+st.subheader("📨 Повідомлення")
+messages_ref = db.reference("messages").order_by_child("timestamp").get()
+if messages_ref:
+    for msg_id, msg_data in messages_ref.items():
+        st.write(f"💬 {msg_data['text']}")
