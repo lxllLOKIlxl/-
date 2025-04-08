@@ -1,9 +1,11 @@
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, db
-import json
 import io
 from PIL import Image
+
+# --- Оформлення заголовка ---
+st.markdown('<h1 style="color:red; text-align:center;">Sm</h1>', unsafe_allow_html=True)
 
 # Ініціалізація Firebase (перевіряємо, чи вже запущено)
 if not firebase_admin._apps:
@@ -26,26 +28,35 @@ if not firebase_admin._apps:
 # Функція для збереження фото у Firebase
 def upload_photo(image_file):
     image_data = image_file.read()
-    image_base64 = image_data.hex()  # Конвертуємо у HEX
+    image_base64 = image_data.hex()
     return image_base64
 
-st.title("Sm: Галерея фото та повідомлень")
+# --- Бокове випливаюче меню для логіну ---
+with st.sidebar:
+    st.subheader("🔒 Адмін-логін")
+    admin_login = st.text_input("Логін:")
+    admin_password = st.text_input("Пароль:", type="password")
+    is_admin = admin_login == "Loki" and admin_password == "19871987"
 
-# Завантаження фото
+# --- Центр: Завантаження фото та опису ---
+st.subheader("📸 Завантаження фото")
 uploaded_file = st.file_uploader("Завантажте фото", type=["jpg", "png", "jpeg"])
 description = st.text_area("Опишіть фото тут")
 
-if uploaded_file and st.button("Зберегти фото"):
-    image_data = upload_photo(uploaded_file)
-    ref = db.reference("photos")
-    ref.push({
-        "image": image_data,
-        "description": description
-    })
-    st.success("Фото успішно збережене!")
+if is_admin:  # Фото може завантажувати лише адмін
+    if uploaded_file and st.button("Зберегти фото"):
+        image_data = upload_photo(uploaded_file)
+        ref = db.reference("photos")
+        ref.push({
+            "image": image_data,
+            "description": description
+        })
+        st.success("Фото успішно збережене!")
+else:
+    st.warning("⚠️ Фото можуть додавати тільки адміністратори.")
 
-# Відображення галереї фото
-st.subheader("📸 Галерея")
+# --- Центр: Галерея фото ---
+st.subheader("📷 Галерея")
 photos_ref = db.reference("photos").get()
 if photos_ref:
     for photo_id, photo_data in photos_ref.items():
@@ -54,21 +65,20 @@ if photos_ref:
         st.image(image, use_container_width=True)
         st.write(f"**Опис:** {photo_data['description']}")
 
-# Форма для повідомлень
-st.subheader("💬 Чат")
-message = st.text_input("Напишіть повідомлення")
-
-if st.button("Надіслати повідомлення"):
+# --- Бокова панель: Чат ---
+st.sidebar.subheader("💬 Чат")
+message = st.sidebar.text_input("Напишіть повідомлення")
+if st.sidebar.button("Надіслати повідомлення"):
     ref = db.reference("messages")
     ref.push({
         "text": message,
-        "timestamp": db.ServerValue.TIMESTAMP  # Додаємо час надсилання
+        "timestamp": db.ServerValue.TIMESTAMP
     })
-    st.success("Повідомлення надіслано!")
+    st.sidebar.success("Повідомлення надіслано!")
 
-# Відображення повідомлень
-st.subheader("📨 Повідомлення")
+# --- Відображення повідомлень у боковій панелі ---
+st.sidebar.subheader("📨 Повідомлення")
 messages_ref = db.reference("messages").order_by_child("timestamp").get()
 if messages_ref:
     for msg_id, msg_data in messages_ref.items():
-        st.write(f"💬 {msg_data['text']}")
+        st.sidebar.write(f"💬 {msg_data['text']}")
