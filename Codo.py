@@ -87,4 +87,5 @@ if messages_ref:
 
 # --- Відображення повідомлень у боковій панелі ---
 st.sidebar.subheader("📨 Повідомлення")
-messages_ref = db.reference("messages
+messages_ref = db.reference("messages").get()
+
