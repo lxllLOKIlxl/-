@@ -87,5 +87,11 @@ if messages_ref:
 
 # --- Відображення повідомлень у боковій панелі ---
 st.sidebar.subheader("📨 Повідомлення")
-messages_ref = db.reference("messages").get()
-
+messages_ref = db.reference("messages").order_by_child("timestamp").get()
+if messages_ref:
+    for msg_id, msg_data in messages_ref.items():
+        message_text = msg_data.get("text", "Немає тексту")
+        timestamp = msg_data.get("timestamp", "Час недоступний")
+        st.sidebar.write(f"💬 {message_text} (🕒 {timestamp})")
+else:
+    st.sidebar.write("❌ Немає повідомлень")
