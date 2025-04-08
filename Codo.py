@@ -82,7 +82,7 @@ messages_ref = db.reference("messages").get()
 if messages_ref:
     current_time = int(time.time() * 1000)  # Поточний час у мілісекундах
     for msg_id, msg_data in messages_ref.items():
-        if "timestamp" in msg_data and current_time - msg_data["timestamp"] > 86400000:  # 24 години = 86400000 мс
+        if "timestamp" in msg_data and current_time - msg_data["timestamp"] > 86400:  # 24 години = 86400 мс
             db.reference(f"messages/{msg_id}").delete()
 
 # --- Відображення повідомлень у боковій панелі ---
@@ -95,3 +95,5 @@ if messages_ref:
         st.sidebar.write(f"💬 {message_text} (🕒 {timestamp})")
 else:
     st.sidebar.write("❌ Немає повідомлень")
+# --- Додаємо Sm ver 1.0 внизу бокової панелі ---
+st.sidebar.markdown('<p style="text-align:center; color:gray;">Sm ver 1.0</p>', unsafe_allow_html=True)
