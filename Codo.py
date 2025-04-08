@@ -5,6 +5,22 @@ import io
 from PIL import Image
 import time
 
+# --- Додаємо чорний фон із плавним переходом ---
+st.markdown(
+    """
+    <style>
+        body {
+            background: linear-gradient(90deg, black, #1a1a1a);
+            color: white;
+        }
+        .stApp {
+            background: black;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # --- Оформлення заголовка ---
 st.markdown('<h1 style="color:red; text-align:center;">Sm</h1>', unsafe_allow_html=True)
 
