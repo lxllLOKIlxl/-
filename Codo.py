@@ -95,5 +95,6 @@ if messages_ref:
         st.sidebar.write(f"💬 {message_text} (🕒 {timestamp})")
 else:
     st.sidebar.write("❌ Немає повідомлень")
-# --- Додаємо Sm ver 1.0 внизу бокової панелі ---
-st.sidebar.markdown('<p style="text-align:center; color:gray;">Sm ver 1.0</p>', unsafe_allow_html=True)
+# --- Додаємо Sm ver 1.0 внизу випливаючого вікна ---
+with st.sidebar:
+    st.markdown('<p style="text-align:center; color:gray; font-size:14px;">Sm ver 1.0</p>', unsafe_allow_html=True)
