@@ -95,6 +95,14 @@ if messages_ref:
         st.sidebar.write(f"💬 {message_text} (🕒 {timestamp})")
 else:
     st.sidebar.write("❌ Немає повідомлень")
+    
+    # --- Бокова панель: Контактна інформація ---
+with st.sidebar:
+    st.markdown('<h2 style="text-align:center; color:red;">Sm Підтримка</h2>', unsafe_allow_html=True)
+    st.subheader("📞 Контакти")
+    st.write("📱 Адміністратор: +380 99 362 55 37")
+    st.write("📱 Техпідтримка: +380 96 522 26 37")
+
 # --- Додаємо Sm ver 1.0 внизу випливаючого вікна ---
 with st.sidebar:
     st.markdown('<p style="text-align:center; color:gray; font-size:14px;">Sm ver 1.0</p>', unsafe_allow_html=True)
