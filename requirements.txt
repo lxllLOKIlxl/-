@@ -1,2 +1,5 @@
 streamlit
-pygame
+firebase-admin
+pillow
+numpy
+requests
