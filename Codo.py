@@ -3,6 +3,7 @@ import firebase_admin
 from firebase_admin import credentials, db
 import io
 from PIL import Image
+import time
 
 # --- Оформлення заголовка ---
 st.markdown('<h1 style="color:red; text-align:center;">Sm</h1>', unsafe_allow_html=True)
@@ -72,13 +73,18 @@ if st.sidebar.button("Надіслати повідомлення"):
     ref = db.reference("messages")
     ref.push({
         "text": message,
-        "timestamp": db.ServerValue.TIMESTAMP
+        "timestamp": {".sv": "timestamp"}  # Автоматичний час у Firebase
     })
     st.sidebar.success("Повідомлення надіслано!")
 
+# --- Видалення повідомлень після 24 годин ---
+messages_ref = db.reference("messages").get()
+if messages_ref:
+    current_time = int(time.time() * 1000)  # Поточний час у мілісекундах
+    for msg_id, msg_data in messages_ref.items():
+        if "timestamp" in msg_data and current_time - msg_data["timestamp"] > 86400000:  # 24 години = 86400000 мс
+            db.reference(f"messages/{msg_id}").delete()
+
 # --- Відображення повідомлень у боковій панелі ---
 st.sidebar.subheader("📨 Повідомлення")
-messages_ref = db.reference("messages").order_by_child("timestamp").get()
-if messages_ref:
-    for msg_id, msg_data in messages_ref.items():
-        st.sidebar.write(f"💬 {msg_data['text']}")
+messages_ref = db.reference("messages
