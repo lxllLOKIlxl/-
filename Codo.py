@@ -1,13 +1,13 @@
 import streamlit as st
 
 # Заголовок сторінки
-st.title("Sm: Галерея з фото та описами")
+st.title("Sm: Галерея фото та описів")
 
 # Завантаження фото
 uploaded_file = st.file_uploader("Завантажте фото", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
-    st.image(uploaded_file, caption="Ваше фото", use_column_width=True)
+    st.image(uploaded_file, caption="Ваше фото", use_container_width=True)
 
     # Додавання опису
     description = st.text_area("Опишіть фото тут")
